@@ -77,7 +77,7 @@ jobs:
         id: get
         run: |
           if ${{ startsWith(github.ref, 'refs/tags/v') }}; then
-            echo "VERSION=${GITHUB_REF#refs/v*/}" >> $GITHUB_ENV
+            echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
           else
             echo "VERSION=0.0.0-${GITHUB_SHA::8}" >> $GITHUB_ENV
           fi
