@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"github.com/go-logr/zapr"
 	"github.com/namsral/flag"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 	"ilo4-metrics-proxy/pkg/ilo4"
@@ -15,6 +18,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
+	"time"
 )
 
 func main() {
@@ -26,6 +30,9 @@ func main() {
 	log := zapr.NewLogger(zapLog)
 
 	// Get configuration
+	var listen string
+	flag.StringVar(&listen, "listen", ":2112", "address and port server should listen to")
+
 	var url string
 	flag.StringVar(&url, "ilo-url", "", "iLO server base URL, e.g. https://ilo.example.com")
 
@@ -34,9 +41,6 @@ func main() {
 
 	var credentialsPath string
 	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "path to a valid JSON with server credentials")
-
-	var labels string
-	flag.StringVar(&labels, "prometheus-labels", "", "comma-separated list of labels, in key:value format, added to all prometheus metrics")
 
 	flag.Parse()
 
@@ -71,19 +75,31 @@ func main() {
 			log.Info("reading credentials", "path", credentialsPath)
 			return os.Open(credentialsPath)
 		},
+		LoginCounts: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace:   "ilo",
+			Subsystem:   "proxy",
+			Name:        "logins_total",
+			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
+			ConstLabels: map[string]string{"target": url},
+		}),
+	}
+
+	// TODO
+	_, err = iloClient.GetTemperatures(context.TODO())
+	if err != nil {
+		log.Error(err, "test")
 	}
 
 	// Start
-	// TODO http server
-	log.Info("started")
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write([]byte(time.Now().String()))
+	})
+	http.Handle("/metrics", promhttp.Handler())
 
-	// Test
-	temps, err := iloClient.GetTemperatures(context.TODO())
-	if err != nil {
+	log.Info("listening on " + listen)
+	if err := http.ListenAndServe(listen, nil); err != nil {
 		panic(err)
 	}
-
-	fmt.Println(temps)
 }
 
 func newHttpClient(serverCert []byte) (*http.Client, error) {

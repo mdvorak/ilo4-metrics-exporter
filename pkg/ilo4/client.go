@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 )
@@ -14,6 +15,7 @@ type Client struct {
 	Client              *http.Client
 	Url                 string
 	CredentialsProvider func() (io.Reader, error)
+	LoginCounts         prometheus.Counter
 }
 
 func (c *Client) GetTemperatures(ctx context.Context) (HealthTemperature, error) {
@@ -71,6 +73,11 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 func (c *Client) doLogin(ctx context.Context) error {
 	url := c.Url + "/json/login_session"
 	log := c.Log.WithValues("method", "POST", "url", url)
+
+	// Increment counter
+	if c.LoginCounts != nil {
+		c.LoginCounts.Inc()
+	}
 
 	// Get credentials reader
 	cred, err := c.CredentialsProvider()

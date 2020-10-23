@@ -27,6 +27,7 @@ spec:
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - args:
+            - --listen=:2112
             {{- if .Values.ilo.certificate }}
             - --ilo-certificate-path=/certificate.pem
             {{- end }}
@@ -34,10 +35,6 @@ spec:
           env:
             - name: ILO_URL
               value: {{ .Values.ilo.url }}
-            {{- if .Values.ilo.labels }}
-            - name: PROMETHEUS_LABELS
-              value: {{ .Values.ilo.labels }}
-          {{- end }}
           name: {{ .Chart.Name }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}

@@ -20,7 +20,6 @@ ilo:
   login:
     secretName: "" # defaults to deployment name, must be created outside this helm chart
     secretKey: "login.json" # contents must be in format {"method": "login", "user_login": "", "password": ""}
-  labels: "" # labels added to prometheus metrics, in format "hostname:my-server,other:foo"
 
 serviceAccount:
   # Specifies whether a service account should be created
