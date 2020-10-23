@@ -4,14 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"github.com/go-logr/zapr"
+	"github.com/namsral/flag"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 	"ilo4-metrics-proxy/pkg/ilo4"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
-	"strings"
+	"os"
 )
 
 func main() {
@@ -22,18 +25,57 @@ func main() {
 	}
 	log := zapr.NewLogger(zapLog)
 
+	// Get configuration
+	var url string
+	flag.StringVar(&url, "ilo-url", "", "iLO server base URL, e.g. https://ilo.example.com")
+
+	var certificatePath string
+	flag.StringVar(&certificatePath, "ilo-certificate-path", "", "path to a iLO server certificate, in PEM format")
+
+	var credentialsPath string
+	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "")
+
+	flag.Parse()
+
+	// Validate flags
+	if url == "" {
+		panic(fmt.Errorf("ilo-url not set"))
+	}
+	if certificatePath == "" {
+		panic(fmt.Errorf("ilo-certificate-path not set"))
+	}
+	if credentialsPath == "" {
+		panic(fmt.Errorf("ilo-credentials-path not set"))
+	}
+
+	// Read certificate
+	log.Info("reading certificate", "path", certificatePath)
+	serverCert, err := ioutil.ReadFile(certificatePath)
+	if err != nil {
+		panic(err)
+	}
+
 	// HTTP
-	httpClient, err := newHttpClient([]byte("-----BEGIN CERTIFICATE-----\nMIICujCCAiOgAwIBAgIISbJSyZ/4+SowDQYJKoZIhvcNAQELBQAwgYoxJjAkBgNV\nBAMMHURlZmF1bHQgSXNzdWVyIChEbyBub3QgdHJ1c3QpMSMwIQYDVQQKDBpIZXds\nZXR0IFBhY2thcmQgRW50ZXJwcmlzZTEMMAoGA1UECwwDSVNTMRAwDgYDVQQHDAdI\nb3VzdG9uMQ4wDAYDVQQIDAVUZXhhczELMAkGA1UEBhMCVVMwHhcNMTgwODAzMTkx\nOTQ4WhcNMzMwODAyMTkxOTQ4WjB8MRgwFgYDVQQDDA9pbG8ubWR2b3Jhay5vcmcx\nIzAhBgNVBAoMGkhld2xldHQgUGFja2FyZCBFbnRlcnByaXNlMQwwCgYDVQQLDANJ\nU1MxEDAOBgNVBAcMB0hvdXN0b24xDjAMBgNVBAgMBVRleGFzMQswCQYDVQQGEwJV\nUzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAtyrgsEQ1s+ktshr9GurP/nSG\nU+flShBZ5my2nSyJxsoFS03XfIRBnH5O9IFs3oyFYLE+GMYoVLjIcwuEz8NLFfsM\n1TSviSmv8Ox9+obHw2I1oT8Yd5/KpdazZkFIHTuCSfFh3zU2CZEMk4ht40PTPjJo\nltVsaAsFBTvfeDxxSKMCAwEAAaM2MDQwCwYDVR0PBAQDAgWgMAkGA1UdIwQCMAAw\nGgYDVR0RBBMwEYIPaWxvLm1kdm9yYWsub3JnMA0GCSqGSIb3DQEBCwUAA4GBACLv\nfogJ7GX+ZjV3A2t4sOTzTm0gujFLqUfFkbMXGJOoumxM2NcHKz2gFdGQi7MKe4wC\noJ8PXGcY94AyadPo6wgwQtjtqvqTxEKR/1ND13XZYTJMc8cW3A/0u818lmaEecIn\nNz14WiJI7sxOdeduy18k2E63tsTi9HqF4KnZbcCz\n-----END CERTIFICATE-----\n"))
+	httpClient, err := newHttpClient(serverCert)
+	if err != nil {
+		panic(err)
+	}
 
 	// Client
+	log.Info("initializing iLO4 client", "url", url)
 	iloClient := &ilo4.Ilo4Client{
 		Log:    log,
 		Client: httpClient,
-		Url:    "https://ilo.mdvorak.org",
+		Url:    url,
 		CredentialsProvider: func() (io.Reader, error) {
-			return strings.NewReader(`{"method":"login","user_login":"metrics","password":""}`), nil
+			log.Info("reading credentials", "path", credentialsPath)
+			return os.Open(credentialsPath)
 		},
 	}
+
+	// Start
+	// TODO
+	log.Info("started")
 
 	// Test
 	err = iloClient.DoGetTempratures(context.TODO(), true)
