@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ilo4-metrics-proxy
+  labels:
+    app.kubernetes.io/name: ilo4-metrics-proxy
+data:
+  ilo-url: https://0.0.0.0
+  config.json: |
+    {
+      "method": "login",
+      "user_login": "",
+      "password": ""
+    }

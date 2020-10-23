@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ilo4-metrics-proxy
+  labels:
+    app.kubernetes.io/name: ilo4-metrics-proxy
+    app.kubernetes.io/component: server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ilo4-metrics-proxy
+      app.kubernetes.io/component: server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ilo4-metrics-proxy
+        app.kubernetes.io/component: server
+    spec:
+      containers:
+        - command:
+            - /proxy
+            - --ilo-certificate-path=/certificate.pem
+            - --ilo-credentials-path=/login.json
+          image: ilo4-metrics-proxy:latest
+          name: server
+          env:
+            - name: ILO_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: ilo-url
+                  name: ilo4-metrics-proxy
+          resources:
+            limits:
+              cpu: 200m
+              memory: 20Mi
+            requests:
+              cpu: 50m
+              memory: 30Mi
+          volumeMounts:
+            - name: secret
+              mountPath: /
+              subPath: login.pem
+              readOnly: true
+            - name: config
+              mountPath: /
+              subPath: login.json
+              readOnly: true
+      terminationGracePeriodSeconds: 5
+      volumes:
+        - name: secret
+          secret:
+            secretName: ilo4-metrics-proxy
+        - name: config
+          configMap:
+            name: ilo4-metrics-proxy
