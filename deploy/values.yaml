@@ -1,0 +1,76 @@
+# Default values for ilo4-metrics-proxy.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ilo4-metrics-proxy
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+ilo:
+  url: "https://0.0.0.0" # iLO4 server url
+  certificate: "" # PEM formatted server certificate - if empty, iLO SSL certificate must be trusted
+  login:
+    secretName: "" # defaults to deployment name, must be created outside this helm chart
+    secretKey: "login.json" # contents must be in format {"method": "login", "user_login": "", "password": ""}
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: { }
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: { }
+
+podSecurityContext: { }
+# fsGroup: 2000
+
+securityContext: { }
+  # capabilities:
+#   drop:
+#   - ALL
+# readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  annotations: { }
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: [ ]
+  tls: [ ]
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: { }
+  limits:
+    cpu: 100m
+    memory: 30Mi
+  requests:
+    cpu: 50m
+    memory: 20Mi
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }

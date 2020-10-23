@@ -44,9 +44,6 @@ func main() {
 	if url == "" {
 		panic(fmt.Errorf("ilo-url not set"))
 	}
-	if certificatePath == "" {
-		panic(fmt.Errorf("ilo-certificate-path not set"))
-	}
 	if credentialsPath == "" {
 		panic(fmt.Errorf("ilo-credentials-path not set"))
 	}
@@ -90,16 +87,17 @@ func main() {
 }
 
 func newHttpClient(serverCert []byte) (*http.Client, error) {
-	// Certificates
-	certs := x509.NewCertPool()
-	certs.AppendCertsFromPEM(serverCert)
-
 	// TLS
-	tlsConfig := &tls.Config{
-		RootCAs: certs,
+	tlsConfig := &tls.Config{}
+
+	if serverCert != nil {
+		certs := x509.NewCertPool()
+		certs.AppendCertsFromPEM(serverCert)
+
+		tlsConfig.RootCAs = certs
 	}
 
-	// Cookies are needed
+	// Cookies are needed for session
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		return nil, err

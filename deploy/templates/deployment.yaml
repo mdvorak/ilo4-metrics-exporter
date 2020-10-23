@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ilo4-metrics-proxy.fullname" . }}
+  labels:
+  {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+  {{- include "ilo4-metrics-proxy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+    {{- include "ilo4-metrics-proxy.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ilo4-metrics-proxy.serviceAccountName" . }}
+      securityContext:
+      {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - args:
+            {{- if .Values.ilo.certificate }}
+            - --ilo-certificate-path=/certificate.pem
+            {{- end }}
+            - --ilo-credentials-path=/login.json
+          env:
+            - name: ILO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ilo4-metrics-proxy.fullname" . }}
+                  key: url
+          name: {{ .Chart.Name }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.ilo.certificate }}
+            - name: config
+              mountPath: /certificate.pem
+              subPath: certificate.pem
+              readOnly: true
+            {{- end }}
+            - name: secret
+              mountPath: /login.json
+              subPath: {{ .Values.ilo.login.secretKey }}
+              readOnly: true
+      volumes:
+        - name: secret
+          secret:
+            secretName: {{ .Values.ilo.login.secretName | default (include "ilo4-metrics-proxy.fullname" .) }}
+        - name: config
+          configMap:
+            name: {{ include "ilo4-metrics-proxy.fullname" . }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+  {{- toYaml . | nindent 8 }}
+
+  {{- end }}
