@@ -33,7 +33,10 @@ func main() {
 	flag.StringVar(&certificatePath, "ilo-certificate-path", "", "path to a iLO server certificate, in PEM format")
 
 	var credentialsPath string
-	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "")
+	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "path to a valid JSON with server credentials")
+
+	var labels string
+	flag.StringVar(&labels, "prometheus-labels", "", "comma-separated list of labels, in key:value format, added to all prometheus metrics")
 
 	flag.Parse()
 
@@ -63,8 +66,8 @@ func main() {
 
 	// Client
 	log.Info("initializing iLO4 client", "url", url)
-	iloClient := &ilo4.Ilo4Client{
-		Log:    log,
+	iloClient := &ilo4.Client{
+		Log:    log.WithName("ilo4-client"),
 		Client: httpClient,
 		Url:    url,
 		CredentialsProvider: func() (io.Reader, error) {
@@ -78,10 +81,12 @@ func main() {
 	log.Info("started")
 
 	// Test
-	err = iloClient.DoGetTempratures(context.TODO(), true)
+	temps, err := iloClient.GetTemperatures(context.TODO())
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println(temps)
 }
 
 func newHttpClient(serverCert []byte) (*http.Client, error) {
