@@ -33,10 +33,11 @@ spec:
             - --ilo-credentials-path=/login.json
           env:
             - name: ILO_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "ilo4-metrics-proxy.fullname" . }}
-                  key: url
+              value: {{ .Values.ilo.url }}
+            {{- if .Values.ilo.labels }}
+            - name: PROMETHEUS_LABELS
+              value: {{ .Values.ilo.labels }}
+          {{- end }}
           name: {{ .Chart.Name }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
@@ -44,7 +45,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 2112
               protocol: TCP
           readinessProbe:
             httpGet:

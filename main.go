@@ -74,7 +74,7 @@ func main() {
 	}
 
 	// Start
-	// TODO
+	// TODO http server
 	log.Info("started")
 
 	// Test

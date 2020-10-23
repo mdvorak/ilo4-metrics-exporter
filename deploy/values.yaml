@@ -20,7 +20,7 @@ ilo:
   login:
     secretName: "" # defaults to deployment name, must be created outside this helm chart
     secretKey: "login.json" # contents must be in format {"method": "login", "user_login": "", "password": ""}
-
+  labels: "" # labels added to prometheus metrics, in format "hostname:my-server,other:foo"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -37,7 +37,7 @@ podSecurityContext: { }
 # fsGroup: 2000
 
 securityContext: { }
-  # capabilities:
+# capabilities:
 #   drop:
 #   - ALL
 # readOnlyRootFilesystem: true
@@ -46,7 +46,7 @@ securityContext: { }
 
 service:
   type: ClusterIP
-  port: 80
+  port: 2112
 
 ingress:
   enabled: false
@@ -62,12 +62,12 @@ ingress:
   #      - chart-example.local
 
 resources: { }
-  limits:
-    cpu: 100m
-    memory: 30Mi
-  requests:
-    cpu: 50m
-    memory: 20Mi
+#  limits:
+#    cpu: 100m
+#    memory: 30Mi
+#  requests:
+#    cpu: 50m
+#    memory: 20Mi
 
 nodeSelector: { }
 
