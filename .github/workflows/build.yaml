@@ -1,0 +1,100 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - main
+
+env:
+  IMAGE_REPOSITORY: docker.pkg.github.com/${{ github.repository }}/ilo4-metrics-proxy
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Setup
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ~1.15
+
+      # Cache
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      # Test
+      - name: Run tests
+        run: |
+          go test ./...
+
+      - name: Build
+        run: GO111MODULE=on go build -a -o bin/proxy main.go
+
+      # Lint helm
+      - name: Helm lint
+        run: helm lint deploy/
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ test ] # Don't publish if test fails
+    steps:
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Setup
+      - name: Podman login to GitHub
+        run: sudo podman login --username '${{ github.actor }}' --password '${{ github.token }}' docker.pkg.github.com
+
+      # Cache
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      # Release version
+      - name: Get the version
+        id: get
+        run: |
+          if ${{ startsWith(github.ref, 'refs/tags/v') }}; then
+            echo "VERSION=${GITHUB_REF#refs/v*/}" >> $GITHUB_ENV
+          else
+            echo "VERSION=0.0.0-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          fi
+
+      # Build
+      - name: Build image
+        run: |
+          sudo podman build . -t '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}' -v ~/go/pkg/mod:/go/pkg/mod:rw
+
+      - name: Push image
+        run: |
+          sudo podman push '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
+
+      # Release Helm
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      # TODO
