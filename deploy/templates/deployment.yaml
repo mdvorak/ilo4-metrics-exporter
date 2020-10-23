@@ -27,6 +27,7 @@ spec:
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - args:
+            - --production
             - --listen=:2112
             {{- if .Values.ilo.certificate }}
             - --ilo-certificate-path=/certificate.pem
@@ -46,7 +47,7 @@ spec:
               protocol: TCP
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
           resources:
           {{- toYaml .Values.resources | nindent 12 }}

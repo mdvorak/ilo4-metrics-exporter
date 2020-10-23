@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -21,15 +20,21 @@ import (
 	"time"
 )
 
-func main() {
-	// Logger
-	zapLog, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
+func newZapLogger(production bool) (*zap.Logger, error) {
+	if production {
+		return zap.NewProduction()
+	} else {
+		return zap.NewDevelopment()
 	}
-	log := zapr.NewLogger(zapLog)
+}
+
+func main() {
+	var err error
 
 	// Get configuration
+	var production bool
+	flag.BoolVar(&production, "production", false, "production logging format")
+
 	var listen string
 	flag.StringVar(&listen, "listen", ":2112", "address and port server should listen to")
 
@@ -43,6 +48,13 @@ func main() {
 	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "path to a valid JSON with server credentials")
 
 	flag.Parse()
+
+	// Logger
+	zapLog, err := newZapLogger(production)
+	if err != nil {
+		panic(err)
+	}
+	log := zapr.NewLogger(zapLog)
 
 	// Validate flags
 	if url == "" {
@@ -84,22 +96,24 @@ func main() {
 		}),
 	}
 
-	// TODO
-	_, err = iloClient.GetTemperatures(context.TODO())
-	if err != nil {
-		log.Error(err, "test")
+	// Metrics
+	metrics := &ilo4.TemperatureMetrics{
+		Client: iloClient,
 	}
+	prometheus.MustRegister(metrics)
 
 	// Start
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = writer.Write([]byte(time.Now().String()))
-	})
+	http.HandleFunc("/health", healthHandler)
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Info("listening on " + listen)
 	if err := http.ListenAndServe(listen, nil); err != nil {
 		panic(err)
 	}
+}
+
+func healthHandler(writer http.ResponseWriter, _ *http.Request) {
+	_, _ = writer.Write([]byte(time.Now().String()))
 }
 
 func newHttpClient(serverCert []byte) (*http.Client, error) {
