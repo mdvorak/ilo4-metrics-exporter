@@ -92,9 +92,13 @@ jobs:
           sudo podman push '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
 
       # Release Helm
-      - name: Configure Git
+      - name: Set Helm version
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          sed -i 's/^version:.*/version: ${{ env.VERSION }}/g' deploy/Chart.yaml
+          sed -i 's/^appVersion:.*/appVersion: ${{ env.VERSION }}/g' deploy/Chart.yaml
 
-      # TODO
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@v1.2.0
+        with:
+          token: ${{ github.token }}
+          charts_dir: deploy/
