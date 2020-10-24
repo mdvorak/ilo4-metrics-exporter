@@ -1,41 +1,54 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "ilo4-metrics-proxy.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
-{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+  {{- $fullName := include "ilo4-metrics-proxy.fullname" . -}}
+  {{- $ingressPath := .Values.ingress.path -}}
+  {{- $svcPort := .Values.service.port -}}
+  {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1beta1
-{{- else -}}
+  {{- else -}}
 apiVersion: extensions/v1beta1
-{{- end }}
+  {{- end }}
 kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
+  {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+  {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
   {{- if .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
     - hosts:
         {{- range .hosts }}
         - {{ . | quote }}
-        {{- end }}
+      {{- end }}
       secretName: {{ .secretName }}
-    {{- end }}
+  {{- end }}
   {{- end }}
   rules:
+    {{- if .Values.ingress.hosts  }}
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ . }}
       http:
         paths:
-          {{- range .paths }}
-          - path: {{ . }}
+          - path: {{ $ingressPath }}
             backend:
               serviceName: {{ $fullName }}
               servicePort: {{ $svcPort }}
-          {{- end }}
     {{- end }}
+    {{- else }}
+    - http:
+        paths:
+          - backend:
+              serviceName: {{ $fullName }}
+              servicePort: {{ $svcPort }}
+            {{- if $ingressPath }}
+            path: {{ $ingressPath }}
+  {{- end }}
+  {{- end -}}
   {{- end }}
