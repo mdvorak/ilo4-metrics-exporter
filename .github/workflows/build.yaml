@@ -97,14 +97,20 @@ jobs:
             QUAY_EXPIRES_AFTER=never
           fi
 
-          sudo podman build . -t '${{ env.IMAGE }}' -v ~/go/pkg/mod:/go/pkg/mod:rw --build-arg QUAY_EXPIRES_AFTER=${QUAY_EXPIRES_AFTER}
-        env:
-          IMAGE: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
+          sudo podman build . \
+            -v ~/go/pkg/mod:/go/pkg/mod:rw \
+            --label quay.expires-after=${QUAY_EXPIRES_AFTER} \
+            --label org.opencontainers.image.authors='${{ github.actor }}' \
+            --label org.opencontainers.image.created="$(date --iso-8601=seconds)" \
+            --label org.opencontainers.image.title='${{ env.IMAGE_REPOSITORY }}' \
+            --label org.opencontainers.image.source='https://github.com/${{ github.repository }}' \
+            --label org.opencontainers.image.revision='${{ github.sha }}' \
+            --label org.opencontainers.image.licenses='MIT' \
+            --label org.opencontainers.image.description='Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics.' \
+            -t '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
 
       - name: Push image
-        run: sudo podman push '${{ env.IMAGE }}'
-        env:
-          IMAGE: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
+        run: sudo podman push '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
 
   # TODO start Kind and try deploying the chart with the built image
   #  deploy:

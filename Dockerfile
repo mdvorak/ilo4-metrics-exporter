@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM docker.io/golang:1.15 as builder
+FROM docker.io/golang:1.15.3 as builder
 
 # Prepare Go environment
 ARG GOPROXY
@@ -29,6 +29,3 @@ COPY --from=builder /workspace/proxy .
 USER nonroot:nonroot
 
 ENTRYPOINT ["/proxy"]
-
-ARG QUAY_EXPIRES_AFTER=never
-LABEL maintainer="mikee2185@gmail.com" quay.expires-after="$QUAY_EXPIRES_AFTER"
