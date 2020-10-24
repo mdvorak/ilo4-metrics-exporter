@@ -132,17 +132,22 @@ jobs:
           kubectl apply -f deploy/ci/fake-secret.yaml
           # Install
           helm install ilo4-metrics-proxy deploy/ --set image.tag='${{ env.VERSION }}'
-          # DEBUG
-          sleep 30
-          kubectl get pods --all-namespaces
-          kubectl logs deployment/ilo4-metrics-proxy
 
-          # Wait
+      - name: Wait
+        id: wait
+        run: |
           kubectl wait --for=condition=available --timeout=60s deployment/ilo4-metrics-proxy
+        continue-on-error: true
+
+      - name: Print logs
+        if: steps.wait.outcome == 'failure'
+        run: |
+          kubectl logs deployment/ilo4-metrics-proxy
 
       - name: Helm test
         run: |
           helm test ilo4-metrics-proxy --logs
+          kubectl logs deployment/ilo4-metrics-proxy
 
   release:
     name: Release
