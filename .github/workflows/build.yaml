@@ -135,6 +135,10 @@ jobs:
           # DEBUG
           kubectl get pods --all-namespaces
           kubectl describe deployment ilo4-metrics-proxy
+          sleep 30
+          kubectl describe deployment ilo4-metrics-proxy
+          kubectl get pods -n default -oyaml
+
           # Wait
           kubectl wait --for=condition=available --timeout=60s deployment/ilo4-metrics-proxy
 
