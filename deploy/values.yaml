@@ -73,3 +73,13 @@ nodeSelector: { }
 tolerations: [ ]
 
 affinity: { }
+
+extraObjects: [ ]
+#  - apiVersion: bitnami.com/v1alpha1
+#    kind: SealedSecret
+#    metadata:
+#      name: ilo4-metrics-proxy
+#      namespace: ilo4-metrics-proxy
+#    spec:
+#      encryptedData:
+#        login.json: ...
