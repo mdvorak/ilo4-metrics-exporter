@@ -2,13 +2,10 @@ name: Build
 
 on:
   push:
-    branches:
-      - "*"
-    tags:
-      - v*
+    branches: [ main ]
+    tags: [ v* ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 env:
   NAME: ilo4-metrics-proxy
@@ -129,23 +126,23 @@ jobs:
       - name: Helm install
         run: |
           kubectl apply -f deploy/ci/fake-secret.yaml
-          helm install ilo4-metrics-proxy deploy/ --set image.tag="${VERSION}"
+          helm install "${NAME}" deploy/ --set image.tag="${VERSION}"
 
       - name: Wait
         id: wait
         run: |
-          kubectl wait --for=condition=available --timeout=60s deployment/ilo4-metrics-proxy
+          kubectl wait --for=condition=available --timeout=30s "deployment/${NAME}"
         continue-on-error: true
 
       - name: Print logs
         if: steps.wait.outcome == 'failure'
         run: |
-          kubectl logs deployment/ilo4-metrics-proxy
+          kubectl logs "deployment/${NAME}"
 
       - name: Helm test
         run: |
-          helm test ilo4-metrics-proxy --logs
-          kubectl logs deployment/ilo4-metrics-proxy
+          helm test "${NAME}" --logs
+          kubectl logs "deployment/${NAME}"
 
   release:
     name: Release
