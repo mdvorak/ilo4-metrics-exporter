@@ -64,10 +64,8 @@ jobs:
           go test ./...
 
       # Lint helm
-      - name: Run chart-testing (lint)
-        uses: helm/chart-testing-action@v1.1.0
-        with:
-          command: lint
+      - name: Helm lint
+        run: helm lint deploy/
 
   image:
     name: Build Image
@@ -128,15 +126,16 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0
 
-      - name: Prepare for deployment
+      - name: Helm install
         run: |
+          # Needed before-hand
           kubectl apply -f deploy/ci/fake-secret.yaml
-          echo 'image: { tag: "${{ env.VERSION }}" }' > deploy/ci/test-values.yaml
+          # Install
+          helm install ilo4-metrics-proxy deploy/ --set image.tag='${{ env.VERSION }}'
 
-      - name: Run chart-testing (install)
-        uses: helm/chart-testing-action@v1.1.0
-        with:
-          command: install
+      - name: Helm test
+        run: |
+          helm test ilo4-metrics-proxy --logs
 
   release:
     name: Release
