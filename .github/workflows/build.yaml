@@ -99,18 +99,18 @@ jobs:
 
           sudo podman build . \
             -v ~/go/pkg/mod:/go/pkg/mod:rw \
-            --label quay.expires-after=${QUAY_EXPIRES_AFTER} \
-            --label org.opencontainers.image.authors='${{ github.actor }}' \
+            --label quay.expires-after="${QUAY_EXPIRES_AFTER}" \
+            --label org.opencontainers.image.authors="${GITHUB_ACTOR}" \
             --label org.opencontainers.image.created="$(date --iso-8601=seconds)" \
-            --label org.opencontainers.image.title='${{ env.IMAGE_REPOSITORY }}' \
-            --label org.opencontainers.image.source='https://github.com/${{ github.repository }}' \
-            --label org.opencontainers.image.revision='${{ github.sha }}' \
-            --label org.opencontainers.image.licenses='MIT' \
-            --label org.opencontainers.image.description='Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics.' \
-            -t '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
+            --label org.opencontainers.image.title="${IMAGE_REPOSITORY}" \
+            --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
+            --label org.opencontainers.image.revision="${GITHUB_SHA}" \
+            --label org.opencontainers.image.licenses="MIT" \
+            --label org.opencontainers.image.description="Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics." \
+            -t "${IMAGE_REPOSITORY}:${VERSION}"
 
       - name: Push image
-        run: sudo podman push '${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}'
+        run: sudo podman push "${IMAGE_REPOSITORY}:${VERSION}"
 
   deploy:
     name: Deploy
@@ -129,7 +129,7 @@ jobs:
       - name: Helm install
         run: |
           kubectl apply -f deploy/ci/fake-secret.yaml
-          helm install ilo4-metrics-proxy deploy/ --set image.tag='${{ env.VERSION }}'
+          helm install ilo4-metrics-proxy deploy/ --set image.tag="${VERSION}"
 
       - name: Wait
         id: wait
@@ -163,9 +163,9 @@ jobs:
       - name: Set Helm version
         run: |
           mkdir -p build/charts
-          cp -r deploy/. build/charts/${{ env.NAME }}
-          sed -i 's/^version:.*/version: ${{ env.VERSION }}/g' build/charts/${{ env.NAME }}/Chart.yaml
-          sed -i 's/^appVersion:.*/appVersion: ${{ env.VERSION }}/g' build/charts/${{ env.NAME }}/Chart.yaml
+          cp -r deploy/. "build/charts/${NAME}"
+          sed -i "s/^version:.*/version: ${VERSION}/g" "build/charts/${NAME}/Chart.yaml"
+          sed -i "s/^appVersion:.*/appVersion: ${VERSION}/g" "build/charts/${NAME}/Chart.yaml"
 
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@v1.2.0
