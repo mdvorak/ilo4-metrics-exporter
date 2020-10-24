@@ -92,9 +92,9 @@ jobs:
       # Build
       - name: Build image
         run: |
-          QUAY_EXPIRES_AFTER=never
+          QUAY_EXPIRES_AFTER=1h
           if ${{ needs.version.outputs.is-release }}; then
-            QUAY_EXPIRES_AFTER=1h
+            QUAY_EXPIRES_AFTER=never
           fi
 
           sudo podman build . -t '${{ env.IMAGE }}' -v ~/go/pkg/mod:/go/pkg/mod:rw --build-arg QUAY_EXPIRES_AFTER=${QUAY_EXPIRES_AFTER}
