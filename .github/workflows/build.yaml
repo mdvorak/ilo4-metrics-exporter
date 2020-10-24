@@ -133,11 +133,9 @@ jobs:
           # Install
           helm install ilo4-metrics-proxy deploy/ --set image.tag='${{ env.VERSION }}'
           # DEBUG
-          kubectl get pods --all-namespaces
-          kubectl describe deployment ilo4-metrics-proxy
           sleep 30
-          kubectl describe deployment ilo4-metrics-proxy
-          kubectl get pods -n default -oyaml
+          kubectl get pods --all-namespaces
+          kubectl logs deployment/ilo4-metrics-proxy
 
           # Wait
           kubectl wait --for=condition=available --timeout=60s deployment/ilo4-metrics-proxy
