@@ -128,9 +128,7 @@ jobs:
 
       - name: Helm install
         run: |
-          # Needed before-hand
           kubectl apply -f deploy/ci/fake-secret.yaml
-          # Install
           helm install ilo4-metrics-proxy deploy/ --set image.tag='${{ env.VERSION }}'
 
       - name: Wait
