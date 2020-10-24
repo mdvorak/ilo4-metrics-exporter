@@ -29,3 +29,6 @@ COPY --from=builder /workspace/proxy .
 USER nonroot:nonroot
 
 ENTRYPOINT ["/proxy"]
+
+ARG QUAY_EXPIRES_AFTER=never
+LABEL maintainer="mikee2185@gmail.com" quay.expires-after="$QUAY_EXPIRES_AFTER"
