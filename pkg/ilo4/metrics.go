@@ -29,6 +29,12 @@ type TemperatureMetrics struct {
 	Client *Client
 }
 
+func NewTemperatureMetrics(client *Client) *TemperatureMetrics {
+	return &TemperatureMetrics{
+		Client: client,
+	}
+}
+
 type temperatureMetric struct {
 	Target  string
 	Reading TemperatureMeasurement

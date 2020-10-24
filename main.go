@@ -100,10 +100,7 @@ func main() {
 	}
 
 	// Metrics
-	metrics := &ilo4.TemperatureMetrics{
-		Client: iloClient,
-	}
-	prometheus.MustRegister(metrics)
+	prometheus.MustRegister(ilo4.NewTemperatureMetrics(iloClient))
 
 	// Start
 	http.HandleFunc("/health", healthHandler)
