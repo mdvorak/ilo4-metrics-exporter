@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ version, test ]
     env:
-      IMAGE: ${{ env.IMAGE_REPOSITORY }}:${{ needs.version.outputs.value }}
+      VERSION: ${{ needs.version.outputs.value }}
     steps:
       # Checkout
       - name: Checkout
@@ -98,9 +98,13 @@ jobs:
           fi
 
           sudo podman build . -t '${{ env.IMAGE }}' -v ~/go/pkg/mod:/go/pkg/mod:rw --build-arg QUAY_EXPIRES_AFTER=${QUAY_EXPIRES_AFTER}
+        env:
+          IMAGE: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
 
       - name: Push image
         run: sudo podman push '${{ env.IMAGE }}'
+        env:
+          IMAGE: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
 
   # TODO start Kind and try deploying the chart with the built image
   #  deploy:
