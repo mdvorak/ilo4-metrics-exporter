@@ -5,21 +5,24 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"regexp"
 	"strings"
 )
 
 const (
-	TargetLabel   = "target"
-	SensorLabel   = "sensor"
+	LabelLabel    = "label"
 	LocationLabel = "location"
+	SensorLabel   = "sensor"
+	TargetLabel   = "target"
 )
 
 var (
 	temperatureDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ilo", "server", "temperature_celsius"),
 		"iLO sensor temperature in celsius",
-		[]string{LocationLabel, SensorLabel, TargetLabel}, nil,
+		[]string{LabelLabel, LocationLabel, SensorLabel, TargetLabel}, nil,
 	)
+	labelPrefixRegex = regexp.MustCompile(`^\d+-`)
 )
 
 type TemperatureMetrics struct {
@@ -73,10 +76,14 @@ func (m temperatureMetric) Write(metric *dto.Metric) error {
 		v = (v - 32) / 1.8 // to Celsius
 	}
 
+	// Strip prefix for sensor label
+	sensor := labelPrefixRegex.ReplaceAllString(m.Reading.Label, "")
+
 	// NOTE labels must be sorted by name
 	metric.Label = []*dto.LabelPair{
+		{Name: proto.String(LabelLabel), Value: proto.String(m.Reading.Label)},
 		{Name: proto.String(LocationLabel), Value: proto.String(m.Reading.Location)},
-		{Name: proto.String(SensorLabel), Value: proto.String(m.Reading.Label)},
+		{Name: proto.String(SensorLabel), Value: proto.String(sensor)},
 		{Name: proto.String(TargetLabel), Value: proto.String(m.Target)},
 	}
 	metric.Gauge = &dto.Gauge{Value: proto.Float64(v)}
