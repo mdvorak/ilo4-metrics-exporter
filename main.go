@@ -65,10 +65,13 @@ func main() {
 	}
 
 	// Read certificate
-	log.Info("reading certificate", "path", certificatePath)
-	serverCert, err := ioutil.ReadFile(certificatePath)
-	if err != nil {
-		panic(err)
+	var serverCert []byte
+	if certificatePath != "" {
+		log.Info("reading certificate", "path", certificatePath)
+		serverCert, err = ioutil.ReadFile(certificatePath)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// HTTP
