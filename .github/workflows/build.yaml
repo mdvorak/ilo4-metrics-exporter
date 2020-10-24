@@ -140,7 +140,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [ version, test, image, deploy ] # Don't publish if test fails
     env:
       VERSION: ${{ needs.version.outputs.value }}
