@@ -11,7 +11,6 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/namsral/flag"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
@@ -77,22 +76,7 @@ func main() {
 
 	// Client
 	log.Info("initializing iLO4 client", "url", url)
-	iloClient := &ilo4.Client{
-		Log:    log.WithName("ilo4-client"),
-		Client: httpClient,
-		Url:    url,
-		CredentialsProvider: func() (io.Reader, error) {
-			log.Info("reading credentials", "path", credentialsPath)
-			return os.Open(credentialsPath)
-		},
-		LoginCounts: promauto.NewCounter(prometheus.CounterOpts{
-			Namespace:   "ilo",
-			Subsystem:   "proxy",
-			Name:        "logins_total",
-			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
-			ConstLabels: map[string]string{"target": url},
-		}),
-	}
+	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentialsPath)
 
 	// Try login (tests credentials file), so app does not start with invalid credentials at all
 	err = iloClient.Login(context.Background())
@@ -110,6 +94,7 @@ func main() {
 
 	// Metrics
 	prometheus.MustRegister(ilo4.NewTemperatureMetrics(iloClient))
+	prometheus.MustRegister(iloClient.LoginCounts)
 
 	// Start
 	http.HandleFunc("/health", healthHandler)

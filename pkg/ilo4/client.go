@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
+	"os"
 )
 
 type Client struct {
@@ -16,6 +17,25 @@ type Client struct {
 	Url                 string
 	CredentialsProvider func() (io.Reader, error)
 	LoginCounts         prometheus.Counter
+}
+
+func NewClient(log logr.Logger, httpClient *http.Client, url string, credentialsPath string) *Client {
+	return &Client{
+		Log:    log,
+		Client: httpClient,
+		Url:    url,
+		CredentialsProvider: func() (io.Reader, error) {
+			log.Info("reading credentials", "path", credentialsPath)
+			return os.Open(credentialsPath)
+		},
+		LoginCounts: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace:   "ilo",
+			Subsystem:   "proxy",
+			Name:        "logins_total",
+			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
+			ConstLabels: map[string]string{"target": url},
+		}),
+	}
 }
 
 func (c *Client) GetTemperatures(ctx context.Context) (HealthTemperature, error) {
