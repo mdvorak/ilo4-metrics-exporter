@@ -82,7 +82,7 @@ func main() {
 	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentialsPath)
 
 	// Try login (tests credentials file), so app does not start with invalid credentials at all
-	if noLoginVerify {
+	if !noLoginVerify {
 		err = iloClient.Login(context.Background())
 		if err != nil {
 			panic(fmt.Errorf("login failed, cannot start: %w", err))
