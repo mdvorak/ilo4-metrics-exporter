@@ -2,8 +2,19 @@ apiVersion: v1
 entries:
   ilo4-metrics-proxy:
   - apiVersion: v2
+    appVersion: 0.2.1
+    created: "2020-10-26T09:28:03.826203646Z"
+    description: Deployment of ilo4-metrics-proxy
+    digest: 016731fd2b1ba9f74fd97a3d7cc4850ece856b7c5d30d653c6757b1239e0676c
+    home: https://github.com/mdvorak/ilo4-metrics-proxy
+    name: ilo4-metrics-proxy
+    type: application
+    urls:
+    - https://mdvorak.github.io/ilo4-metrics-proxy/ilo4-metrics-proxy-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
     appVersion: 0.2.0
-    created: "2020-10-24T13:23:03.125718695Z"
+    created: "2020-10-26T09:28:03.825649231Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 34199d5c8e2c04cd4cc93858b295094f7b4c18bb04419c4cd26f875241c322ad
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -14,7 +25,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.1.5
-    created: "2020-10-24T13:23:03.125137093Z"
+    created: "2020-10-26T09:28:03.825095016Z"
     description: Deployment of ilo4-metrics-proxy
     digest: be5186143f18e9416124861d208469cca7f7147f7e0a3bae4272217a34320385
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -25,7 +36,7 @@ entries:
     version: 0.1.5
   - apiVersion: v2
     appVersion: 0.1.4
-    created: "2020-10-24T13:23:03.124586791Z"
+    created: "2020-10-26T09:28:03.8245318Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 38eeb5d6dca04903e4104bbb6ae4f878fe71fcf1894bc18fa2eedfee0bfc3fd5
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -36,7 +47,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.1.3
-    created: "2020-10-24T13:23:03.124031389Z"
+    created: "2020-10-26T09:28:03.823959185Z"
     description: Deployment of ilo4-metrics-proxy
     digest: b33fb40b284f7cf86994d309e5b8583837fe8b92673bd80871a9f60e6e737485
     name: ilo4-metrics-proxy
@@ -44,4 +55,4 @@ entries:
     urls:
     - https://mdvorak.github.io/ilo4-metrics-proxy/ilo4-metrics-proxy-0.1.3.tgz
     version: 0.1.3
-generated: "2020-10-24T13:23:03.123315287Z"
+generated: "2020-10-26T09:28:03.823183063Z"
