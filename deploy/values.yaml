@@ -74,6 +74,8 @@ tolerations: [ ]
 
 affinity: { }
 
+extraArgs: [ ]
+
 extraObjects: [ ]
 #  - apiVersion: bitnami.com/v1alpha1
 #    kind: SealedSecret

@@ -33,6 +33,9 @@ spec:
             - --ilo-certificate-path=/certificate.pem
             {{- end }}
             - --ilo-credentials-path=/login.json
+            {{- range $a := .Values.extraArgs }}
+            - {{ $a }}
+          {{- end }}
           env:
             - name: ILO_URL
               value: {{ .Values.ilo.url }}

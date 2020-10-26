@@ -127,7 +127,7 @@ jobs:
       - name: Helm install
         run: |
           kubectl apply -f deploy/ci/fake-secret.yaml
-          helm install "${NAME}" deploy/ --set image.tag="${VERSION}"
+          helm install "${NAME}" deploy/ --set image.tag="${VERSION}" --set extraArgs[0]="--no-login-verify"
 
       - name: Wait
         id: wait

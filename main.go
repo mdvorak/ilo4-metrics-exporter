@@ -51,6 +51,9 @@ func main() {
 	var credentialsPath string
 	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "path to a valid JSON with server credentials")
 
+	var noLoginVerify bool
+	flag.BoolVar(&noLoginVerify, "no-login-verify", false, "skip login credentials verification on start")
+
 	flag.Parse()
 
 	// Logger
@@ -79,9 +82,11 @@ func main() {
 	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentialsPath)
 
 	// Try login (tests credentials file), so app does not start with invalid credentials at all
-	err = iloClient.Login(context.Background())
-	if err != nil {
-		panic(fmt.Errorf("login failed, cannot start: %w", err))
+	if noLoginVerify {
+		err = iloClient.Login(context.Background())
+		if err != nil {
+			panic(fmt.Errorf("login failed, cannot start: %w", err))
+		}
 	}
 
 	// Watch certificates
