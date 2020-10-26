@@ -4,13 +4,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/namsral/flag"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
+	"gopkg.in/fsnotify.v1"
 	"ilo4-metrics-proxy/pkg/ilo4"
 	"io"
 	"io/ioutil"
@@ -64,18 +65,8 @@ func main() {
 		panic(fmt.Errorf("ilo-credentials-path not set"))
 	}
 
-	// Read certificate
-	var serverCert []byte
-	if certificatePath != "" {
-		log.Info("reading certificate", "path", certificatePath)
-		serverCert, err = ioutil.ReadFile(certificatePath)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	// HTTP
-	httpClient, err := newHttpClient(serverCert)
+	httpClient, err := newHttpClient(log, certificatePath)
 	if err != nil {
 		panic(err)
 	}
@@ -90,13 +81,21 @@ func main() {
 			log.Info("reading credentials", "path", credentialsPath)
 			return os.Open(credentialsPath)
 		},
-		LoginCounts: promauto.NewCounter(prometheus.CounterOpts{
+		LoginCounts: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace:   "ilo",
 			Subsystem:   "proxy",
 			Name:        "logins_total",
 			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
 			ConstLabels: map[string]string{"target": url},
 		}),
+	}
+
+	// Watch certificates
+	err = watchCertificateChanges(log, certificatePath, iloClient)
+	if err != nil {
+		log.Error(err, "failed to setup filesystem watcher, certificate updates won't be available")
+	} else {
+		log.Info("watching certificate for changes", "path", certificatePath)
 	}
 
 	// Metrics
@@ -116,11 +115,17 @@ func healthHandler(writer http.ResponseWriter, _ *http.Request) {
 	_, _ = writer.Write([]byte(time.Now().String()))
 }
 
-func newHttpClient(serverCert []byte) (*http.Client, error) {
+func newHttpClient(log logr.Logger, certificatePath string) (*http.Client, error) {
 	// TLS
 	tlsConfig := &tls.Config{}
 
-	if serverCert != nil {
+	if certificatePath != "" {
+		log.Info("reading certificate", "path", certificatePath)
+		serverCert, err := ioutil.ReadFile(certificatePath)
+		if err != nil {
+			return nil, err
+		}
+
 		certs := x509.NewCertPool()
 		certs.AppendCertsFromPEM(serverCert)
 
@@ -141,4 +146,33 @@ func newHttpClient(serverCert []byte) (*http.Client, error) {
 
 	// Success
 	return client, nil
+}
+
+func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient *ilo4.Client) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	// Async certificate updates
+	go func() {
+		for {
+			select {
+			case _ = <-watcher.Events:
+				log.Info("server certificate changed")
+				if httpClient, err := newHttpClient(log, certificatePath); err != nil {
+					log.Error(err, "failed to replace http client with new certificate")
+				} else {
+					// Replace client with new certificate
+					iloClient.Client = httpClient
+				}
+
+			case err := <-watcher.Errors:
+				log.Error(err, "filesystem watcher failed")
+			}
+		}
+	}()
+
+	// Watch certificate
+	return watcher.Add(certificatePath)
 }
