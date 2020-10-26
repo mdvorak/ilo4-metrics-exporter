@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
@@ -91,6 +92,12 @@ func main() {
 			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
 			ConstLabels: map[string]string{"target": url},
 		}),
+	}
+
+	// Try login (tests credentials file), so app does not start with invalid credentials at all
+	err = iloClient.Login(context.Background())
+	if err != nil {
+		panic(fmt.Errorf("login failed, cannot start: %w", err))
 	}
 
 	// Watch certificates
