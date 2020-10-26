@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -8,6 +10,7 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/namsral/flag"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
@@ -81,7 +84,7 @@ func main() {
 			log.Info("reading credentials", "path", credentialsPath)
 			return os.Open(credentialsPath)
 		},
-		LoginCounts: prometheus.NewCounter(prometheus.CounterOpts{
+		LoginCounts: promauto.NewCounter(prometheus.CounterOpts{
 			Namespace:   "ilo",
 			Subsystem:   "proxy",
 			Name:        "logins_total",
@@ -154,17 +157,32 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 		return err
 	}
 
+	lastHash, err := fileHash(certificatePath)
+	if err != nil {
+		log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
+	}
+
 	// Async certificate updates
 	go func() {
 		for {
 			select {
 			case _ = <-watcher.Events:
-				log.Info("server certificate changed")
-				if httpClient, err := newHttpClient(log, certificatePath); err != nil {
-					log.Error(err, "failed to replace http client with new certificate")
-				} else {
-					// Replace client with new certificate
-					iloClient.Client = httpClient
+				// Get current checksum
+				hash, err := fileHash(certificatePath)
+				if err != nil {
+					log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
+				}
+
+				// Only if hash changed
+				if !bytes.Equal(hash, lastHash) || hash == nil {
+					log.Info("server certificate changed")
+					if httpClient, err := newHttpClient(log, certificatePath); err != nil {
+						log.Error(err, "failed to replace http client with new certificate")
+					} else {
+						// Replace client with new certificate
+						iloClient.Client = httpClient
+						lastHash = hash
+					}
 				}
 
 			case err := <-watcher.Errors:
@@ -175,4 +193,21 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 
 	// Watch certificate
 	return watcher.Add(certificatePath)
+}
+
+func fileHash(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	//goland:noinspection GoUnhandledErrorResult
+	defer f.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, f); err != nil {
+		return nil, err
+	}
+
+	return hash.Sum(nil), nil
 }
