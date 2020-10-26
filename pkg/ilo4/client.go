@@ -48,7 +48,7 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 	// Handle Forbidden
 	if resp.StatusCode == 403 && retry {
 		// Login
-		if err := c.doLogin(ctx); err != nil {
+		if err := c.Login(ctx); err != nil {
 			return HealthTemperature{}, err
 		}
 		// Recursive call, without retry
@@ -70,7 +70,7 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 	return result, nil
 }
 
-func (c *Client) doLogin(ctx context.Context) error {
+func (c *Client) Login(ctx context.Context) error {
 	url := c.Url + "/json/login_session"
 	log := c.Log.WithValues("method", "POST", "url", url)
 
