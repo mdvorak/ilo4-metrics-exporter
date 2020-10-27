@@ -5,6 +5,10 @@ metadata:
   name: {{ include "ilo4-metrics-proxy.fullname" . }}
   labels:
   {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
+  {{- with .Values.serviceMonitor.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   endpoints:
     - honorLabels: true
