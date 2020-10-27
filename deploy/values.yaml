@@ -60,6 +60,13 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+serviceMonitor:
+  enabled: false
+  interval: "" # 30s, empty to use Prometheus default
+  scrapeTimeout: "10s" # 10s, empty to use Prometheus default - make sure timeout is enough to perform both login and scrape
+  metricRelabelings: [ ] # See https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs
+  relabelings: [ ] # See https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs
+
 resources: { }
 #  limits:
 #    cpu: 100m
