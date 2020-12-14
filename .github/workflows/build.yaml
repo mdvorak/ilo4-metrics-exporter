@@ -171,7 +171,7 @@ jobs:
           sed -i "s/^appVersion:.*/appVersion: ${VERSION}/g" "build/charts/${NAME}/Chart.yaml"
 
       - name: Publish Helm chart
-        uses: stefanprodan/helm-gh-pages@v1.2.0
+        uses: stefanprodan/helm-gh-pages@v1.3.0
         with:
           token: ${{ github.token }}
           charts_dir: build/charts/
