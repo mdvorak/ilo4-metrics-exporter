@@ -1,3 +1,5 @@
+![Build](https://github.com/mdvorak/ilo4-metrics-proxy/workflows/Build/badge.svg)
+
 # ilo4-metrics-proxy
 
 Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics. Tested on versions 2.70 and 2.75.
