@@ -23,9 +23,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o proxy ma
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
 WORKDIR /
 COPY --from=builder /workspace/proxy .
-USER nonroot:nonroot
+USER nobody:nobody
 
 ENTRYPOINT ["/proxy"]
