@@ -72,7 +72,7 @@ func main() {
 	}
 
 	// HTTP
-	httpClient, err := newHttpClient(log, certificatePath)
+	httpClient, err := newHTTPClient(log, certificatePath)
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +98,7 @@ func main() {
 	}
 
 	// Metrics
-	prometheus.MustRegister(ilo4.NewTemperatureMetrics(iloClient))
+	prometheus.MustRegister(ilo4.NewIloMetrics(iloClient))
 	prometheus.MustRegister(iloClient.LoginCounts)
 
 	// Start
@@ -115,7 +115,7 @@ func healthHandler(writer http.ResponseWriter, _ *http.Request) {
 	_, _ = writer.Write([]byte(time.Now().String()))
 }
 
-func newHttpClient(log logr.Logger, certificatePath string) (*http.Client, error) {
+func newHTTPClient(log logr.Logger, certificatePath string) (*http.Client, error) {
 	// TLS
 	tlsConfig := &tls.Config{}
 
@@ -163,7 +163,7 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 	go func() {
 		for {
 			select {
-			case _ = <-watcher.Events:
+			case <-watcher.Events:
 				// Get current checksum
 				hash, err := fileHash(certificatePath)
 				if err != nil {
@@ -173,7 +173,7 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 				// Only if hash changed
 				if !bytes.Equal(hash, lastHash) || hash == nil {
 					log.Info("server certificate changed")
-					if httpClient, err := newHttpClient(log, certificatePath); err != nil {
+					if httpClient, err := newHTTPClient(log, certificatePath); err != nil {
 						log.Error(err, "failed to replace http client with new certificate")
 					} else {
 						// Replace client with new certificate

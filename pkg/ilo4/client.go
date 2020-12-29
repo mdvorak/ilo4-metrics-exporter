@@ -14,7 +14,7 @@ import (
 type Client struct {
 	Log                 logr.Logger
 	Client              *http.Client
-	Url                 string
+	URL                 string
 	CredentialsProvider func() (io.Reader, error)
 	LoginCounts         prometheus.Counter
 }
@@ -23,7 +23,7 @@ func NewClient(log logr.Logger, httpClient *http.Client, url string, credentials
 	return &Client{
 		Log:    log,
 		Client: httpClient,
-		Url:    url,
+		URL:    url,
 		CredentialsProvider: func() (io.Reader, error) {
 			log.Info("reading credentials", "path", credentialsPath)
 			return os.Open(credentialsPath)
@@ -43,7 +43,7 @@ func (c *Client) GetTemperatures(ctx context.Context) (HealthTemperature, error)
 }
 
 func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTemperature, error) {
-	url := c.Url + "/json/health_temperature"
+	url := c.URL + "/json/health_temperature"
 	log := c.Log.WithValues("method", "GET", "url", url)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -91,7 +91,7 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 }
 
 func (c *Client) Login(ctx context.Context) error {
-	url := c.Url + "/json/login_session"
+	url := c.URL + "/json/login_session"
 	log := c.Log.WithValues("method", "POST", "url", url)
 
 	// Increment counter

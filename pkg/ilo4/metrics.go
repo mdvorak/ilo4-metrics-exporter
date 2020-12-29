@@ -2,9 +2,9 @@ package ilo4
 
 import (
 	"context"
-	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"google.golang.org/protobuf/proto"
 	"regexp"
 	"strings"
 )
@@ -25,12 +25,12 @@ var (
 	labelPrefixRegex = regexp.MustCompile(`^\d+-`)
 )
 
-type TemperatureMetrics struct {
+type IloMetrics struct {
 	Client *Client
 }
 
-func NewTemperatureMetrics(client *Client) *TemperatureMetrics {
-	return &TemperatureMetrics{
+func NewIloMetrics(client *Client) *IloMetrics {
+	return &IloMetrics{
 		Client: client,
 	}
 }
@@ -41,25 +41,25 @@ type temperatureMetric struct {
 	Error   error
 }
 
-var _ prometheus.Collector = &TemperatureMetrics{}
+var _ prometheus.Collector = &IloMetrics{}
 var _ prometheus.Metric = &temperatureMetric{}
 
-func (t TemperatureMetrics) Describe(descs chan<- *prometheus.Desc) {
+func (t IloMetrics) Describe(descs chan<- *prometheus.Desc) {
 	descs <- temperatureDesc
 }
 
-func (t TemperatureMetrics) Collect(metrics chan<- prometheus.Metric) {
+func (t IloMetrics) Collect(metrics chan<- prometheus.Metric) {
 	// Get data
 	h, err := t.Client.GetTemperatures(context.Background())
 	if err != nil {
-		metrics <- &temperatureMetric{Target: t.Client.Url, Error: err}
+		metrics <- &temperatureMetric{Target: t.Client.URL, Error: err}
 		return
 	}
 
 	// Publish all readings
 	for _, r := range h.Temperature {
 		if r.Status == StatusOk {
-			metrics <- &temperatureMetric{Target: t.Client.Url, Reading: r}
+			metrics <- &temperatureMetric{Target: t.Client.URL, Reading: r}
 		}
 	}
 }
