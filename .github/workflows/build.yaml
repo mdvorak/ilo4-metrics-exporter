@@ -12,9 +12,9 @@ on:
       - published
 
 env:
-  NAME: ilo4-metrics-proxy
+  NAME: ilo4-metrics-exporter
   REGISTRY: quay.io
-  IMAGE_REPOSITORY: quay.io/mdvorak/ilo4-metrics-proxy
+  IMAGE_REPOSITORY: quay.io/mdvorak/ilo4-metrics-exporter
 
 jobs:
   version:

@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 	"gopkg.in/fsnotify.v1"
-	"ilo4-metrics-proxy/pkg/ilo4"
+	"ilo4-metrics-exporter/pkg/ilo4"
 	"io"
 	"io/ioutil"
 	"net/http"

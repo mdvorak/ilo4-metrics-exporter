@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-  {{- $fullName := include "ilo4-metrics-proxy.fullname" . -}}
+  {{- $fullName := include "ilo4-metrics-exporter.fullname" . -}}
   {{- $ingressPath := .Values.ingress.path -}}
   {{- $svcPort := .Values.service.port -}}
   {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
@@ -11,7 +11,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-  {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
+  {{- include "ilo4-metrics-exporter.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
   {{- toYaml . | nindent 4 }}

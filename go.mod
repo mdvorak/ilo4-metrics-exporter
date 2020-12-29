@@ -1,4 +1,4 @@
-module ilo4-metrics-proxy
+module ilo4-metrics-exporter
 
 go 1.15
 

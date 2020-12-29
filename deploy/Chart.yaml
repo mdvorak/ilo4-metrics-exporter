@@ -1,7 +1,7 @@
 apiVersion: v2
-name: ilo4-metrics-proxy
-description: Deployment of ilo4-metrics-proxy
-home: https://github.com/mdvorak/ilo4-metrics-proxy
+name: ilo4-metrics-exporter
+description: Deployment of ilo4-metrics-exporter
+home: https://github.com/mdvorak/ilo4-metrics-exporter
 type: application
 version: 0.0.0
 appVersion: 0.0.0

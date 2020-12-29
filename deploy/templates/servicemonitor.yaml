@@ -2,9 +2,9 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "ilo4-metrics-proxy.fullname" . }}
+  name: {{ include "ilo4-metrics-exporter.fullname" . }}
   labels:
-  {{- include "ilo4-metrics-proxy.labels" . | nindent 4 }}
+  {{- include "ilo4-metrics-exporter.labels" . | nindent 4 }}
   {{- with .Values.serviceMonitor.annotations }}
   annotations:
   {{- toYaml . | nindent 4 }}
@@ -31,7 +31,7 @@ spec:
   jobLabel: {{ .Release.Name }}
   selector:
     matchLabels:
-  {{- include "ilo4-metrics-proxy.selectorLabels" . | nindent 6 }}
+  {{- include "ilo4-metrics-exporter.selectorLabels" . | nindent 6 }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}
