@@ -98,7 +98,7 @@ func main() {
 	}
 
 	// Metrics
-	prometheus.MustRegister(ilo4.NewIloMetrics(iloClient))
+	prometheus.MustRegister(ilo4.NewMetrics(iloClient))
 	prometheus.MustRegister(iloClient.LoginCounts)
 
 	// Start

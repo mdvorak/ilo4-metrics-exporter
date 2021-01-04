@@ -25,30 +25,31 @@ var (
 	labelPrefixRegex = regexp.MustCompile(`^\d+-`)
 )
 
-type IloMetrics struct {
+type Metrics struct {
 	Client *Client
 }
 
-func NewIloMetrics(client *Client) *IloMetrics {
-	return &IloMetrics{
+func NewMetrics(client *Client) *Metrics {
+	return &Metrics{
 		Client: client,
 	}
 }
 
 type temperatureMetric struct {
-	Target  string
+	Target string
+	// TODO interface?
 	Reading TemperatureMeasurement
 	Error   error
 }
 
-var _ prometheus.Collector = &IloMetrics{}
+var _ prometheus.Collector = &Metrics{}
 var _ prometheus.Metric = &temperatureMetric{}
 
-func (t IloMetrics) Describe(descs chan<- *prometheus.Desc) {
+func (t Metrics) Describe(descs chan<- *prometheus.Desc) {
 	descs <- temperatureDesc
 }
 
-func (t IloMetrics) Collect(metrics chan<- prometheus.Metric) {
+func (t Metrics) Collect(metrics chan<- prometheus.Metric) {
 	// Get data
 	h, err := t.Client.GetTemperatures(context.Background())
 	if err != nil {
