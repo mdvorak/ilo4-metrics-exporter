@@ -11,7 +11,7 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20201022231255-08b38378de70
 	google.golang.org/protobuf v1.25.0
-	gopkg.in/fsnotify.v1 v1.4.7
+	gopkg.in/fsnotify.v1 v1.4.9
 )
 
 replace gopkg.in/fsnotify.v1 => gopkg.in/fsnotify.v1 v1.4.7
