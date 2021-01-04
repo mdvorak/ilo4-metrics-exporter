@@ -136,8 +136,10 @@ jobs:
 
       - name: Wait
         id: wait
+        # NOTE tests started to fail randomly, due to service being unavailable, hence 1s hardcoded delay
         run: |
           kubectl wait --for=condition=available --timeout=30s "deployment/${NAME}"
+          sleep 1
         continue-on-error: true
 
       - name: Print logs
