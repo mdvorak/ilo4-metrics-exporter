@@ -46,7 +46,9 @@ stringData:
     {"method": "login", "user_login": "myusername", "password": "mypassword"}
 ```
 
-_Note: It is up to you, how will you create the secret. If you are, for example, using SealedSecrets, object can be
+It is up to you, how will you create the secret. 
+
+If you are using, for example, [SealedSecrets](https://github.com/bitnami-labs/sealed-secrets), object can be
 inlined into chart values, under `extraObjects` key, like this:
 
 ```yaml
@@ -63,6 +65,8 @@ extraObjects:
       encryptedData:
         login.json: abcd12343567752dsadasda...
 ```
+
+_Note: You should never leak unencrypted secrets via helm install, have them in Git repository etc._
 
 ### Certificate
 
