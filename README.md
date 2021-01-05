@@ -2,7 +2,7 @@
 
 # ilo4-metrics-exporter
 
-Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics. Tested on versions 2.70 and 2.75.
+Simple proxy, providing temperatures from HPE iLO 4 as Prometheus metrics. Tested on versions 2.70 and 2.75 on MicroServer Gen8 only.
 
 It requires iLO account with read permissions.
 
