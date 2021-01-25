@@ -2,8 +2,19 @@ apiVersion: v1
 entries:
   ilo4-metrics-exporter:
   - apiVersion: v2
+    appVersion: 0.3.2
+    created: "2021-01-25T13:52:53.949011557Z"
+    description: Deployment of ilo4-metrics-exporter
+    digest: e3c81d9bc9a79910627338bf055f2e8c6698840617de5ec2f1710ab2de9c4dda
+    home: https://github.com/mdvorak/ilo4-metrics-exporter
+    name: ilo4-metrics-exporter
+    type: application
+    urls:
+    - https://mdvorak.github.io/ilo4-metrics-exporter/ilo4-metrics-exporter-0.3.2.tgz
+    version: 0.3.2
+  - apiVersion: v2
     appVersion: 0.3.0
-    created: "2021-01-05T14:37:00.614751513Z"
+    created: "2021-01-25T13:52:53.948161252Z"
     description: Deployment of ilo4-metrics-exporter
     digest: 3e125767c2cc946bb07194d9cee93905fb228a9716461a89ac5ecfabc8f2cd29
     home: https://github.com/mdvorak/ilo4-metrics-exporter
@@ -15,7 +26,7 @@ entries:
   ilo4-metrics-proxy:
   - apiVersion: v2
     appVersion: 0.2.3
-    created: "2021-01-05T14:37:00.618785936Z"
+    created: "2021-01-25T13:52:53.955573296Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 783302e07edf2831fade80fd8c84cf2ae23a2121ed6e69034b121a81abe5a8fe
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -26,7 +37,7 @@ entries:
     version: 0.2.3
   - apiVersion: v2
     appVersion: 0.2.2
-    created: "2021-01-05T14:37:00.618114515Z"
+    created: "2021-01-25T13:52:53.952175676Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 0facc0665de02ed8bb8225e9d203665d07d6dd7e90104fb36ac16b230552b48b
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -37,7 +48,7 @@ entries:
     version: 0.2.2
   - apiVersion: v2
     appVersion: 0.2.1
-    created: "2021-01-05T14:37:00.617493496Z"
+    created: "2021-01-25T13:52:53.951721773Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 016731fd2b1ba9f74fd97a3d7cc4850ece856b7c5d30d653c6757b1239e0676c
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -48,7 +59,7 @@ entries:
     version: 0.2.1
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2021-01-05T14:37:00.616909878Z"
+    created: "2021-01-25T13:52:53.95116067Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 34199d5c8e2c04cd4cc93858b295094f7b4c18bb04419c4cd26f875241c322ad
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -59,7 +70,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.1.5
-    created: "2021-01-05T14:37:00.616366662Z"
+    created: "2021-01-25T13:52:53.950661867Z"
     description: Deployment of ilo4-metrics-proxy
     digest: be5186143f18e9416124861d208469cca7f7147f7e0a3bae4272217a34320385
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -70,7 +81,7 @@ entries:
     version: 0.1.5
   - apiVersion: v2
     appVersion: 0.1.4
-    created: "2021-01-05T14:37:00.615815245Z"
+    created: "2021-01-25T13:52:53.950135064Z"
     description: Deployment of ilo4-metrics-proxy
     digest: 38eeb5d6dca04903e4104bbb6ae4f878fe71fcf1894bc18fa2eedfee0bfc3fd5
     home: https://github.com/mdvorak/ilo4-metrics-proxy
@@ -81,7 +92,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.1.3
-    created: "2021-01-05T14:37:00.615292229Z"
+    created: "2021-01-25T13:52:53.949577361Z"
     description: Deployment of ilo4-metrics-proxy
     digest: b33fb40b284f7cf86994d309e5b8583837fe8b92673bd80871a9f60e6e737485
     name: ilo4-metrics-proxy
@@ -89,4 +100,4 @@ entries:
     urls:
     - https://mdvorak.github.io/ilo4-metrics-exporter/ilo4-metrics-proxy-0.1.3.tgz
     version: 0.1.3
-generated: "2021-01-05T14:37:00.613915487Z"
+generated: "2021-01-25T13:52:53.947541849Z"
