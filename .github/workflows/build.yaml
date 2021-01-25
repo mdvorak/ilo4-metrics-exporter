@@ -69,7 +69,7 @@ jobs:
 
       # Lint helm
       - name: Helm lint
-        run: helm lint deploy/
+        run: helm lint "deploy/${NAME}"
 
   image:
     name: Build
@@ -132,9 +132,9 @@ jobs:
 
       - name: Helm install
         run: |
-          kubectl apply -f deploy/ci/fake-secret.yaml
+          kubectl apply -f "deploy/${NAME}/ci/fake-secret.yaml"
           kubectl apply -f https://raw.githubusercontent.com/helm/charts/master/stable/prometheus-operator/crds/crd-servicemonitor.yaml
-          helm install "${NAME}" deploy/ --set image.tag="${VERSION}" --set serviceMonitor.enable="true" --set extraArgs[0]="--no-login-verify"
+          helm install "${NAME}" "deploy/${NAME}/" --set image.tag="${VERSION}" --set serviceMonitor.enable="true" --set extraArgs[0]="--no-login-verify"
 
       - name: Wait
         id: wait
