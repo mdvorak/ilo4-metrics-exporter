@@ -167,15 +167,10 @@ jobs:
         uses: actions/checkout@v2
 
       # Release Helm
-      - name: Set Helm version
-        run: |
-          mkdir -p build/charts
-          cp -r deploy/. "build/charts/${NAME}"
-          sed -i "s/^version:.*/version: ${VERSION}/g" "build/charts/${NAME}/Chart.yaml"
-          sed -i "s/^appVersion:.*/appVersion: ${VERSION}/g" "build/charts/${NAME}/Chart.yaml"
-
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@v1.4.1
         with:
           token: ${{ github.token }}
-          charts_dir: build/charts/
+          charts_dir: deploy
+          chart_version: ${{ env.VERSION }}
+          app_version: ${{ env.VERSION }}
