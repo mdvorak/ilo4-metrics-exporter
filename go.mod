@@ -1,4 +1,4 @@
-module ilo4-metrics-exporter
+module github.com/mdvorak/ilo4-metrics-exporter
 
 go 1.15
 
