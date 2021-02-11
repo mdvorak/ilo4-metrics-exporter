@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
@@ -14,12 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"golang.org/x/net/publicsuffix"
 	"ilo4-metrics-exporter/pkg/ilo4"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/cookiejar"
 	"os"
 	"time"
 )
@@ -27,9 +25,8 @@ import (
 func newZapLogger(production bool) (*zap.Logger, error) {
 	if production {
 		return zap.NewProduction()
-	} else {
-		return zap.NewDevelopment()
 	}
+	return zap.NewDevelopment()
 }
 
 func main() {
@@ -50,9 +47,6 @@ func main() {
 
 	var credentialsPath string
 	flag.StringVar(&credentialsPath, "ilo-credentials-path", "", "path to a valid JSON with server credentials")
-
-	var noLoginVerify bool
-	flag.BoolVar(&noLoginVerify, "no-login-verify", false, "skip login credentials verification on start")
 
 	flag.Parse()
 
@@ -77,29 +71,27 @@ func main() {
 		panic(err)
 	}
 
-	// Client
-	log.Info("initializing iLO4 client", "url", url)
-	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentialsPath)
-
-	// Try login (tests credentials file), so app does not start with invalid credentials at all
-	if !noLoginVerify {
-		err = iloClient.Login(context.Background())
-		if err != nil {
-			panic(fmt.Errorf("login failed, cannot start: %w", err))
-		}
+	// Credentials
+	credentials, err := readCredentials(credentialsPath)
+	if err != nil {
+		log.Error(err, "failed to read credentials")
 	}
 
-	// Watch certificates
-	err = watchCertificateChanges(log, certificatePath, iloClient)
+	// Client
+	log.Info("initializing iLO4 client", "url", url)
+	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentials)
+
+	// Watch certificates and credentials
+	err = watchConfigurationChanges(log, certificatePath, credentialsPath, iloClient)
 	if err != nil {
 		log.Error(err, "failed to setup filesystem watcher, certificate updates won't be available")
 	} else {
 		log.Info("watching certificate for changes", "path", certificatePath)
+		log.Info("watching credentials for changes", "path", credentialsPath)
 	}
 
 	// Metrics
 	prometheus.MustRegister(ilo4.NewMetrics(iloClient))
-	prometheus.MustRegister(iloClient.LoginCounts)
 
 	// Start
 	http.HandleFunc("/health", healthHandler)
@@ -117,7 +109,9 @@ func healthHandler(writer http.ResponseWriter, _ *http.Request) {
 
 func newHTTPClient(log logr.Logger, certificatePath string) (*http.Client, error) {
 	// TLS
-	tlsConfig := &tls.Config{}
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
 
 	if certificatePath != "" {
 		log.Info("reading certificate", "path", certificatePath)
@@ -132,23 +126,16 @@ func newHTTPClient(log logr.Logger, certificatePath string) (*http.Client, error
 		tlsConfig.RootCAs = certs
 	}
 
-	// Cookies are needed for session
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	if err != nil {
-		return nil, err
-	}
-
 	// Create client
 	client := &http.Client{
 		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-		Jar:       jar,
 	}
 
 	// Success
 	return client, nil
 }
 
-func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient *ilo4.Client) error {
+func watchConfigurationChanges(log logr.Logger, certificatePath string, credentialsPath string, iloClient *ilo4.Client) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -163,22 +150,32 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 	go func() {
 		for {
 			select {
-			case <-watcher.Events:
-				// Get current checksum
-				hash, err := fileHash(certificatePath)
-				if err != nil {
-					log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
-				}
+			case evt := <-watcher.Events:
+				if evt.Name == certificatePath {
+					// Get current checksum
+					hash, err := fileHash(certificatePath)
+					if err != nil {
+						log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
+					}
 
-				// Only if hash changed
-				if !bytes.Equal(hash, lastHash) || hash == nil {
-					log.Info("server certificate changed")
-					if httpClient, err := newHTTPClient(log, certificatePath); err != nil {
-						log.Error(err, "failed to replace http client with new certificate")
+					// Only if hash changed
+					if !bytes.Equal(hash, lastHash) || hash == nil {
+						log.Info("server certificate changed")
+						if httpClient, err := newHTTPClient(log, certificatePath); err != nil {
+							log.Error(err, "failed to replace http client with new certificate")
+						} else {
+							// Replace client with new certificate
+							iloClient.Client = httpClient
+							lastHash = hash
+						}
+					}
+				} else if evt.Name == credentialsPath {
+					log.Info("server credentials changed")
+					credentials, err := readCredentials(credentialsPath)
+					if err != nil {
+						log.Error(err, "failed to read updated credentials")
 					} else {
-						// Replace client with new certificate
-						iloClient.Client = httpClient
-						lastHash = hash
+						iloClient.Credentials = credentials
 					}
 				}
 
@@ -189,7 +186,17 @@ func watchCertificateChanges(log logr.Logger, certificatePath string, iloClient 
 	}()
 
 	// Watch certificate
-	return watcher.Add(certificatePath)
+	if err := watcher.Add(certificatePath); err != nil {
+		return fmt.Errorf("failed to add path %s to watcher: %w", certificatePath, err)
+	}
+
+	// Watch credentials
+	if err := watcher.Add(credentialsPath); err != nil {
+		return fmt.Errorf("failed to add path %s to watcher: %w", credentialsPath, err)
+	}
+
+	// Success
+	return nil
 }
 
 func fileHash(path string) ([]byte, error) {
@@ -207,4 +214,24 @@ func fileHash(path string) ([]byte, error) {
 	}
 
 	return hash.Sum(nil), nil
+}
+
+func readCredentials(path string) (ilo4.Credentials, error) {
+	// Open
+	f, err := os.Open(path)
+	if err != nil {
+		return ilo4.Credentials{}, fmt.Errorf("failed to open credentials file %s: %w", path, err)
+	}
+
+	//goland:noinspection GoUnhandledErrorResult
+	defer f.Close()
+
+	// Read
+	var result ilo4.Credentials
+	if err := json.NewDecoder(f).Decode(&result); err != nil {
+		return ilo4.Credentials{}, fmt.Errorf("failed to deserialize credentials json: %w", err)
+	}
+
+	// Success
+	return result, nil
 }

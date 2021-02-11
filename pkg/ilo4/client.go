@@ -5,44 +5,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/prometheus/client_golang/prometheus"
-	"io"
 	"net/http"
-	"os"
 )
 
-type Client struct {
-	Log                 logr.Logger
-	Client              *http.Client
-	URL                 string
-	CredentialsProvider func() (io.Reader, error)
-	LoginCounts         prometheus.Counter
+type Credentials struct {
+	UserLogin string `json:"user_login"`
+	Password  string `json:"password"`
 }
 
-func NewClient(log logr.Logger, httpClient *http.Client, url string, credentialsPath string) *Client {
+type Client struct {
+	Log         logr.Logger
+	Client      *http.Client
+	URL         string
+	Credentials Credentials
+}
+
+func NewClient(log logr.Logger, httpClient *http.Client, url string, credentials Credentials) *Client {
 	return &Client{
-		Log:    log,
-		Client: httpClient,
-		URL:    url,
-		CredentialsProvider: func() (io.Reader, error) {
-			log.Info("reading credentials", "path", credentialsPath)
-			return os.Open(credentialsPath)
-		},
-		LoginCounts: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace:   "ilo",
-			Subsystem:   "proxy",
-			Name:        "logins_total",
-			Help:        "Number of logins, proxy had to do to authenticate session against iLO server",
-			ConstLabels: map[string]string{"target": url},
-		}),
+		Log:         log,
+		Client:      httpClient,
+		URL:         url,
+		Credentials: credentials,
 	}
 }
 
 func (c *Client) GetTemperatures(ctx context.Context) (HealthTemperature, error) {
-	return c.doGetTemperatures(ctx, true)
-}
-
-func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTemperature, error) {
 	url := c.URL + "/json/health_temperature"
 	log := c.Log.WithValues("method", "GET", "url", url)
 
@@ -50,6 +37,8 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 	if err != nil {
 		return HealthTemperature{}, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	req.SetBasicAuth(c.Credentials.UserLogin, c.Credentials.Password)
 	req.Header.Set("Accept", "application/json")
 
 	// Make request
@@ -65,16 +54,6 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 
 	log.Info("got response", "status", resp.Status, "statusCode", resp.StatusCode)
 
-	// Handle Forbidden
-	if resp.StatusCode == 403 && retry {
-		// Login
-		if err := c.Login(ctx); err != nil {
-			return HealthTemperature{}, err
-		}
-		// Recursive call, without retry
-		return c.doGetTemperatures(ctx, false)
-	}
-
 	// Handle other http errors then 2xx
 	if resp.StatusCode/100 != 2 {
 		return HealthTemperature{}, fmt.Errorf("get temperatures failed with %s", resp.Status)
@@ -88,53 +67,4 @@ func (c *Client) doGetTemperatures(ctx context.Context, retry bool) (HealthTempe
 
 	// Success
 	return result, nil
-}
-
-func (c *Client) Login(ctx context.Context) error {
-	url := c.URL + "/json/login_session"
-	log := c.Log.WithValues("method", "POST", "url", url)
-
-	// Increment counter
-	if c.LoginCounts != nil {
-		c.LoginCounts.Inc()
-	}
-
-	// Get credentials reader
-	cred, err := c.CredentialsProvider()
-	if err != nil {
-		return fmt.Errorf("failed to get credentials reader: %w", err)
-	}
-
-	// Close it later, if needed (ignore errors, normally it is closed by http client)
-	if credClose, ok := cred.(io.Closer); ok {
-		//goland:noinspection GoUnhandledErrorResult
-		defer credClose.Close()
-	}
-
-	// Prepare request
-	req, err := http.NewRequestWithContext(ctx, "POST", url, cred)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Login - it will store cookie in the CookieJar
-	log.V(1).Info("sending request")
-	resp, err := c.Client.Do(req)
-	if err != nil {
-		return fmt.Errorf("login request failed: %w", err)
-	}
-
-	// Ignore response body
-	_ = resp.Body.Close()
-
-	log.Info("got response", "status", resp.Status, "statusCode", resp.StatusCode)
-
-	// Handle other http errors then 2xx
-	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("login failed with %s", resp.Status)
-	}
-
-	// Success
-	return nil
 }
