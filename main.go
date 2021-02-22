@@ -82,7 +82,7 @@ func main() {
 	iloClient := ilo4.NewClient(log.WithName("ilo4-client"), httpClient, url, credentials)
 
 	// Watch certificates and credentials
-	err = watchConfigurationChanges(log, certificatePath, credentialsPath, iloClient)
+	err = watchConfigurationChanges(log, iloClient, certificatePath, credentialsPath)
 	if err != nil {
 		log.Error(err, "failed to setup filesystem watcher, certificate updates won't be available")
 	} else {
@@ -135,13 +135,13 @@ func newHTTPClient(log logr.Logger, certificatePath string) (*http.Client, error
 	return client, nil
 }
 
-func watchConfigurationChanges(log logr.Logger, certificatePath string, credentialsPath string, iloClient *ilo4.Client) error {
+func watchConfigurationChanges(log logr.Logger, iloClient *ilo4.Client, certificatePath string, credentialsPath string) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
 
-	lastHash, err := fileHash(certificatePath)
+	lastCertificateHash, err := fileHash(certificatePath)
 	if err != nil {
 		log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
 	}
@@ -152,31 +152,9 @@ func watchConfigurationChanges(log logr.Logger, certificatePath string, credenti
 			select {
 			case evt := <-watcher.Events:
 				if evt.Name == certificatePath {
-					// Get current checksum
-					hash, err := fileHash(certificatePath)
-					if err != nil {
-						log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
-					}
-
-					// Only if hash changed
-					if !bytes.Equal(hash, lastHash) || hash == nil {
-						log.Info("server certificate changed")
-						if httpClient, err := newHTTPClient(log, certificatePath); err != nil {
-							log.Error(err, "failed to replace http client with new certificate")
-						} else {
-							// Replace client with new certificate
-							iloClient.Client = httpClient
-							lastHash = hash
-						}
-					}
+					lastCertificateHash = certificateFileChanged(log, iloClient, certificatePath, lastCertificateHash)
 				} else if evt.Name == credentialsPath {
-					log.Info("server credentials changed")
-					credentials, err := readCredentials(credentialsPath)
-					if err != nil {
-						log.Error(err, "failed to read updated credentials")
-					} else {
-						iloClient.Credentials = credentials
-					}
+					credentialsFileChanged(log, iloClient, credentialsPath)
 				}
 
 			case err := <-watcher.Errors:
@@ -197,6 +175,38 @@ func watchConfigurationChanges(log logr.Logger, certificatePath string, credenti
 
 	// Success
 	return nil
+}
+
+func certificateFileChanged(log logr.Logger, iloClient *ilo4.Client, certificatePath string, lastHash []byte) (hash []byte) {
+	// Get current checksum
+	hash, err := fileHash(certificatePath)
+	if err != nil {
+		log.V(1).Error(err, "failed get certificate file hash", "path", certificatePath)
+	}
+
+	// Only if hash changed
+	if !bytes.Equal(hash, lastHash) || hash == nil {
+		log.Info("server certificate changed")
+		if httpClient, err := newHTTPClient(log, certificatePath); err != nil {
+			log.Error(err, "failed to replace http client with new certificate")
+		} else {
+			// Replace client with new certificate
+			iloClient.Client = httpClient
+		}
+	}
+
+	// Return hash
+	return
+}
+
+func credentialsFileChanged(log logr.Logger, iloClient *ilo4.Client, credentialsPath string) {
+	log.Info("server credentials changed")
+	credentials, err := readCredentials(credentialsPath)
+	if err != nil {
+		log.Error(err, "failed to read updated credentials")
+	} else {
+		iloClient.Credentials = credentials
+	}
 }
 
 func fileHash(path string) ([]byte, error) {
