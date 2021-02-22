@@ -29,6 +29,7 @@ func newZapLogger(production bool) (*zap.Logger, error) {
 	return zap.NewDevelopment()
 }
 
+//nolint:funlen
 func main() {
 	var err error
 
@@ -84,7 +85,7 @@ func main() {
 	// Watch certificates and credentials
 	err = watchConfigurationChanges(log, iloClient, certificatePath, credentialsPath)
 	if err != nil {
-		log.Error(err, "failed to setup filesystem watcher, certificate updates won't be available")
+		log.Error(err, "failed to setup filesystem watcher, certificate and credential updates won't be available")
 	} else {
 		log.Info("watching certificate for changes", "path", certificatePath)
 		log.Info("watching credentials for changes", "path", credentialsPath)
