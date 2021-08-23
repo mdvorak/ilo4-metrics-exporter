@@ -3,7 +3,7 @@ module github.com/mdvorak/ilo4-metrics-exporter
 go 1.15
 
 require (
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.0
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
 	github.com/namsral/flag v1.7.4-pre
