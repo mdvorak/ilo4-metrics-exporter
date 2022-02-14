@@ -168,7 +168,7 @@ jobs:
 
       # Release Helm
       - name: Publish Helm chart
-        uses: stefanprodan/helm-gh-pages@v1.4.1
+        uses: stefanprodan/helm-gh-pages@v1.5.0
         with:
           token: ${{ github.token }}
           charts_dir: deploy
