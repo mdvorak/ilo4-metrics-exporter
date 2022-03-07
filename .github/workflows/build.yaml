@@ -43,7 +43,7 @@ jobs:
     steps:
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Setup
       - name: Setup Go
@@ -80,7 +80,7 @@ jobs:
     steps:
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Setup
       - name: Login to quay.io
@@ -125,7 +125,7 @@ jobs:
     steps:
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
@@ -164,7 +164,7 @@ jobs:
     steps:
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Release Helm
       - name: Publish Helm chart
