@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM docker.io/golang:1.17.3 as builder
+FROM docker.io/golang:1.19.5 as builder
 
 # Prepare Go environment
 ARG GOPROXY
